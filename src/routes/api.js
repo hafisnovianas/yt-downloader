@@ -98,14 +98,16 @@ api.post('/info', async (c) => {
       mimeType: audio.mimeType,
       bitrate: audio.bitrate,
       size: audio.contentLength,
+      streamUrl: audio.url,
     },
     clientUsed,
   });
 });
 
 /**
- * GET /api/download?v={videoId}
+ * GET /api/download?v={videoId}&stream={base64url}&title={title}
  * Proxy streaming: fetch audio dari YouTube → pipe langsung ke browser.
+ * Jika param `stream` tersedia (dari /api/info), langsung proxy tanpa panggil Innertube.
  */
 api.get('/download', async (c) => {
   const videoId = c.req.query('v');
@@ -113,36 +115,61 @@ api.get('/download', async (c) => {
     return c.json({ error: 'Video ID tidak valid.' }, 400);
   }
 
-  let data;
-  let audio;
+  const streamParam = c.req.query('stream');
+  let audioUrl;
+  let mimeType = 'video/mp4';
+  let title = c.req.query('title') || 'audio';
 
-  const cached = getCachedStream(videoId);
-  if (cached) {
-    data = cached.data;
-    audio = cached.audio;
+  if (streamParam) {
+    // Decode stream URL dari base64url yang dikirim frontend
+    try {
+      let b64 = streamParam.replace(/-/g, '+').replace(/_/g, '/');
+      while (b64.length % 4) b64 += '=';
+      audioUrl = atob(b64);
+    } catch {
+      return c.json({ error: 'Parameter stream tidak valid.' }, 400);
+    }
+
+    // Validasi: hanya izinkan URL googlevideo.com
+    if (!audioUrl.includes('.googlevideo.com/')) {
+      return c.json({ error: 'URL stream tidak valid.' }, 400);
+    }
   } else {
-    const player = await fetchPlayerData(videoId);
-    if (!player.ok) {
-      return c.json({ error: player.reason }, 502);
+    // Fallback: panggil Innertube jika stream URL tidak tersedia
+    const cached = getCachedStream(videoId);
+    let data;
+    let audio;
+
+    if (cached) {
+      data = cached.data;
+      audio = cached.audio;
+    } else {
+      const player = await fetchPlayerData(videoId);
+      if (!player.ok) {
+        return c.json({ error: player.reason }, 502);
+      }
+      data = player.data;
+      audio = pickBestAudio(data.streamingData);
+      if (audio?.url) {
+        setCachedStream(videoId, data, audio);
+      }
     }
-    data = player.data;
-    audio = pickBestAudio(data.streamingData);
-    if (audio?.url) {
-      setCachedStream(videoId, data, audio);
+
+    if (!audio?.url) {
+      return c.json({ error: 'Audio tidak tersedia untuk diunduh.' }, 404);
     }
+
+    audioUrl = audio.url;
+    mimeType = audio.mimeType?.split(';')[0] || 'video/mp4';
+    title = data.videoDetails?.title || 'audio';
   }
 
-  if (!audio?.url) {
-    return c.json({ error: 'Audio tidak tersedia untuk diunduh.' }, 404);
-  }
-
-  const title = data.videoDetails?.title || 'audio';
-  const ext = audioExtension(audio.mimeType);
+  const ext = audioExtension(mimeType);
   const safeTitle = title.replace(/[<>:"/\\|?*]/g, '_').slice(0, 60);
   const filename = `${safeTitle}.${ext}`;
 
   // Fetch audio dari YouTube
-  const audioRes = await fetch(audio.url, {
+  const audioRes = await fetch(audioUrl, {
     headers: {
       'User-Agent':
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)',
@@ -155,7 +182,7 @@ api.get('/download', async (c) => {
 
   // Streaming proxy — pipe langsung ke browser
   const headers = {
-    'Content-Type': audio.mimeType?.split(';')[0] || 'video/mp4',
+    'Content-Type': mimeType,
     'Content-Disposition': `attachment; filename="${filename}"`,
     'Cache-Control': 'no-store',
   };

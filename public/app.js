@@ -291,9 +291,14 @@ form.addEventListener('submit', async (e) => {
 
     const safeTitle = (data.title || 'video').replace(/[<>:"/\\|?*]/g, '_').slice(0, 60);
 
-    // Siapkan tombol unduh video langsung (MP4) dengan PIN query param jika ada
+    // Siapkan tombol unduh video langsung (MP4) dengan PIN & stream parameter jika ada
     const pinQuery = userPin ? `&pin=${encodeURIComponent(userPin)}` : '';
-    videoBtn.href = `/api/download?v=${data.videoId}${pinQuery}`;
+    let streamQuery = '';
+    if (data.audio?.streamUrl) {
+      const b64 = btoa(data.audio.streamUrl).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      streamQuery = `&stream=${encodeURIComponent(b64)}&title=${encodeURIComponent(safeTitle)}`;
+    }
+    videoBtn.href = `/api/download?v=${data.videoId}${pinQuery}${streamQuery}`;
     videoBtn.download = `${safeTitle}.mp4`;
 
     extractStatus.hidden = true;
@@ -317,7 +322,12 @@ audioBtn.addEventListener('click', async () => {
   extractStatus.textContent = '⏳ Mengunduh stream dari server...';
 
   try {
-    const res = await fetch(`/api/download?v=${currentVideo.videoId}${pinQuery}`);
+    let streamQuery = '';
+    if (currentVideo.audio?.streamUrl) {
+      const b64 = btoa(currentVideo.audio.streamUrl).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      streamQuery = `&stream=${encodeURIComponent(b64)}&title=${encodeURIComponent(safeTitle)}`;
+    }
+    const res = await fetch(`/api/download?v=${currentVideo.videoId}${pinQuery}${streamQuery}`);
 
     if (res.status === 401) {
       const errData = await res.json().catch(() => ({}));
