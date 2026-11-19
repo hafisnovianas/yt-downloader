@@ -8,9 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Menghilangkan kegagalan unduhan akibat isolate cache miss dengan meneruskan stream URL dari rute info langsung ke rute download.
 - Mengatasi kegagalan unduhan (HTTP 502) akibat blokir bot YouTube dengan menambahkan in-memory stream cache antara rute info dan download.
 
 ### Added
+- Penyimpanan otomatis link YouTube terakhir yang digunakan pada `localStorage` (`yt_last_url`).
 - Fitur proteksi PIN rahasia (`ACCESS_PIN`) via middleware backend untuk membatasi akses publik.
 - Dialog modal PIN di frontend dengan penyimpanan sesi otomatis di `localStorage`.
 - Template konfigurasi secret `.env.example` untuk panduan deployment Cloudflare.

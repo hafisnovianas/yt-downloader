@@ -20,7 +20,13 @@ const pinInput = document.getElementById('pin-input');
 const pinCancelBtn = document.getElementById('pin-cancel-btn');
 
 const PIN_STORAGE_KEY = 'yt_access_pin';
+const LAST_URL_STORAGE_KEY = 'yt_last_url';
 let userPin = localStorage.getItem(PIN_STORAGE_KEY) || '';
+
+const savedUrl = localStorage.getItem(LAST_URL_STORAGE_KEY);
+if (savedUrl) {
+  urlInput.value = savedUrl;
+}
 
 function updatePinDisplay() {
   if (pinStatusIcon) {
@@ -247,6 +253,8 @@ form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const url = urlInput.value.trim();
   if (!url) return;
+
+  localStorage.setItem(LAST_URL_STORAGE_KEY, url);
 
   clearError();
   resultEl.hidden = true;
