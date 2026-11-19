@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { extractVideoId, fetchPlayerData } from '../lib/innertube.js';
-import { pickBestAudio, audioExtension } from '../lib/audio-picker.js';
+import { pickBestAudio, audioExtension } from '../lib/stream-picker.js';
 
 const api = new Hono();
 
