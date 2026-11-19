@@ -11,6 +11,46 @@ const audioBtn = document.getElementById('audio-btn');
 const videoBtn = document.getElementById('video-btn');
 const extractStatus = document.getElementById('extract-status');
 
+// ── Elemen PIN Akses ──
+const pinBtn = document.getElementById('pin-btn');
+const pinStatusIcon = document.getElementById('pin-status-icon');
+const pinDialog = document.getElementById('pin-dialog');
+const pinForm = document.getElementById('pin-form');
+const pinInput = document.getElementById('pin-input');
+const pinCancelBtn = document.getElementById('pin-cancel-btn');
+
+const PIN_STORAGE_KEY = 'yt_access_pin';
+let userPin = localStorage.getItem(PIN_STORAGE_KEY) || '';
+
+function updatePinDisplay() {
+  if (pinStatusIcon) {
+    pinStatusIcon.textContent = userPin ? '🔑' : '🔒';
+  }
+}
+updatePinDisplay();
+
+pinBtn.addEventListener('click', () => {
+  pinInput.value = userPin;
+  pinDialog.showModal();
+});
+
+pinCancelBtn.addEventListener('click', () => {
+  pinDialog.close();
+});
+
+pinForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  userPin = pinInput.value.trim();
+  if (userPin) {
+    localStorage.setItem(PIN_STORAGE_KEY, userPin);
+  } else {
+    localStorage.removeItem(PIN_STORAGE_KEY);
+  }
+  updatePinDisplay();
+  pinDialog.close();
+  clearError();
+});
+
 let currentVideo = null;
 
 function formatDuration(sec) {
@@ -213,13 +253,23 @@ form.addEventListener('submit', async (e) => {
   setLoading(true);
 
   try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (userPin) headers['X-Access-PIN'] = userPin;
+
     const res = await fetch('/api/info', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ url }),
     });
 
     const data = await res.json();
+
+    if (res.status === 401) {
+      showError(data.error || 'PIN akses diperlukan.');
+      pinInput.value = '';
+      pinDialog.showModal();
+      return;
+    }
 
     if (!res.ok) {
       showError(data.error || `Error ${res.status}`);
@@ -241,8 +291,9 @@ form.addEventListener('submit', async (e) => {
 
     const safeTitle = (data.title || 'video').replace(/[<>:"/\\|?*]/g, '_').slice(0, 60);
 
-    // Siapkan tombol unduh video langsung (MP4)
-    videoBtn.href = `/api/download?v=${data.videoId}`;
+    // Siapkan tombol unduh video langsung (MP4) dengan PIN query param jika ada
+    const pinQuery = userPin ? `&pin=${encodeURIComponent(userPin)}` : '';
+    videoBtn.href = `/api/download?v=${data.videoId}${pinQuery}`;
     videoBtn.download = `${safeTitle}.mp4`;
 
     extractStatus.hidden = true;
@@ -259,16 +310,27 @@ audioBtn.addEventListener('click', async () => {
   if (!currentVideo) return;
 
   const safeTitle = (currentVideo.title || 'audio').replace(/[<>:"/\\|?*]/g, '_').slice(0, 60);
+  const pinQuery = userPin ? `&pin=${encodeURIComponent(userPin)}` : '';
 
   audioBtn.disabled = true;
   extractStatus.hidden = false;
   extractStatus.textContent = '⏳ Mengunduh stream dari server...';
 
   try {
-    const res = await fetch(`/api/download?v=${currentVideo.videoId}`);
+    const res = await fetch(`/api/download?v=${currentVideo.videoId}${pinQuery}`);
+
+    if (res.status === 401) {
+      const errData = await res.json().catch(() => ({}));
+      showError(errData.error || 'PIN akses tidak valid.');
+      pinInput.value = '';
+      pinDialog.showModal();
+      return;
+    }
+
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-    const contentLength = Number(res.headers.get('Content-Length')) || 0;
+    const contentLength =
+      Number(res.headers.get('Content-Length')) || currentVideo.audio?.size || 0;
     const reader = res.body.getReader();
     const chunks = [];
     let receivedLength = 0;

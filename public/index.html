@@ -8,7 +8,12 @@
 </head>
 <body>
   <main>
-    <h1>YT Audio & Video Downloader</h1>
+    <div class="header-row">
+      <h1>YT Audio & Video Downloader</h1>
+      <button id="pin-btn" class="btn-ghost" type="button" title="Atur PIN Akses">
+        <span id="pin-status-icon">🔒</span> PIN
+      </button>
+    </div>
     <p class="subtitle">Unduh audio murni atau video 360p dari link YouTube.</p>
 
     <form id="form" autocomplete="off">
@@ -48,6 +53,25 @@
       <p id="extract-status" class="extract-status" hidden></p>
     </section>
   </main>
+
+  <!-- Dialog Modal PIN Akses -->
+  <dialog id="pin-dialog" class="pin-modal">
+    <form id="pin-form" method="dialog">
+      <h3>PIN Akses Rahasia</h3>
+      <p class="modal-desc">Situs ini diproteksi. Masukkan PIN untuk mengunduh.</p>
+      <input
+        type="password"
+        id="pin-input"
+        placeholder="Masukkan PIN..."
+        autocomplete="current-password"
+        required
+      >
+      <div class="modal-actions">
+        <button type="button" id="pin-cancel-btn" class="btn-action btn-secondary">Batal</button>
+        <button type="submit" class="btn-action btn-primary">Simpan PIN</button>
+      </div>
+    </form>
+  </dialog>
 
   <script src="/app.js"></script>
 </body>

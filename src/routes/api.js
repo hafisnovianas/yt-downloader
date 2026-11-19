@@ -1,11 +1,26 @@
 import { Hono } from 'hono';
 import { extractVideoId, fetchPlayerData } from '../lib/innertube.js';
 import { pickBestAudio, audioExtension } from '../lib/audio-picker.js';
-import { rateLimitMiddleware, hashIP } from '../lib/rate-limit.js';
 
 const api = new Hono();
 
-api.use('*', rateLimitMiddleware);
+// Middleware Proteksi PIN Akses
+api.use('*', async (c, next) => {
+  const configuredPin = c.env.ACCESS_PIN;
+  if (!configuredPin) {
+    return next(); // Tanpa proteksi jika ACCESS_PIN tidak diatur di environment
+  }
+
+  const clientPin = c.req.header('x-access-pin') || c.req.query('pin');
+  if (clientPin !== configuredPin) {
+    return c.json(
+      { error: 'PIN akses tidak valid atau belum dimasukkan.', needPin: true },
+      401
+    );
+  }
+
+  return next();
+});
 
 /**
  * POST /api/info
@@ -100,23 +115,6 @@ api.get('/download', async (c) => {
 
   if (!audioRes.ok) {
     return c.json({ error: `Download gagal: HTTP ${audioRes.status}` }, 502);
-  }
-
-  // Log ke D1 secara async (tidak blocking stream)
-  const db = c.env.DB;
-  if (db) {
-    const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || 'unknown';
-    c.executionCtx.waitUntil(
-      hashIP(ip).then((ipHash) =>
-        db
-          .prepare(
-            'INSERT INTO downloads (video_id, title, audio_itag, audio_size, status, ip_hash) VALUES (?, ?, ?, ?, ?, ?)'
-          )
-          .bind(videoId, title, audio.itag, audio.contentLength, 'ok', ipHash)
-          .run()
-          .catch(() => {}) // Jangan gagalkan download karena log error
-      )
-    );
   }
 
   // Streaming proxy — pipe langsung ke browser
