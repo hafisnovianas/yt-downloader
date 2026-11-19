@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Mengatasi kegagalan unduhan (HTTP 502) akibat blokir bot YouTube dengan menambahkan in-memory stream cache antara rute info dan download.
+
 ### Added
 - Fitur proteksi PIN rahasia (`ACCESS_PIN`) via middleware backend untuk membatasi akses publik.
 - Dialog modal PIN di frontend dengan penyimpanan sesi otomatis di `localStorage`.
@@ -17,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modul middleware rate limiter berbasis database (`src/lib/rate-limit.js`).
 
 ### Changed
+- Penyelarasan nama Worker pada `wrangler.jsonc` menjadi `yt-downloader` agar sesuai dengan CI dashboard Cloudflare.
 - Refaktor arsitektur menjadi murni *stateless* tanpa database untuk kemudahan deployment.
 - Penyelarasan nama proyek dan branding menjadi **YT Downloader** (`yt-downloader-web`) serta modul internal `src/lib/stream-picker.js`.
 

@@ -4,6 +4,28 @@ import { pickBestAudio, audioExtension } from '../lib/stream-picker.js';
 
 const api = new Hono();
 
+// In-Memory Stream Cache (menghindari duplikasi pemanggilan Innertube antara /info dan /download)
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 menit
+const streamCache = new Map();
+
+function getCachedStream(videoId) {
+  const item = streamCache.get(videoId);
+  if (!item) return null;
+  if (Date.now() - item.timestamp > CACHE_TTL_MS) {
+    streamCache.delete(videoId);
+    return null;
+  }
+  return item;
+}
+
+function setCachedStream(videoId, data, audio) {
+  if (streamCache.size > 200) {
+    const oldest = streamCache.keys().next().value;
+    streamCache.delete(oldest);
+  }
+  streamCache.set(videoId, { data, audio, timestamp: Date.now() });
+}
+
 // Middleware Proteksi PIN Akses
 api.use('*', async (c, next) => {
   const configuredPin = c.env.ACCESS_PIN;
@@ -59,6 +81,9 @@ api.post('/info', async (c) => {
     );
   }
 
+  // Simpan data stream ke cache agar rute /download tidak perlu request ulang ke YouTube
+  setCachedStream(videoId, data, audio);
+
   const details = data.videoDetails || {};
   const thumbnails = details.thumbnail?.thumbnails || [];
 
@@ -88,13 +113,24 @@ api.get('/download', async (c) => {
     return c.json({ error: 'Video ID tidak valid.' }, 400);
   }
 
-  const player = await fetchPlayerData(videoId);
-  if (!player.ok) {
-    return c.json({ error: player.reason }, 502);
-  }
+  let data;
+  let audio;
 
-  const { data } = player;
-  const audio = pickBestAudio(data.streamingData);
+  const cached = getCachedStream(videoId);
+  if (cached) {
+    data = cached.data;
+    audio = cached.audio;
+  } else {
+    const player = await fetchPlayerData(videoId);
+    if (!player.ok) {
+      return c.json({ error: player.reason }, 502);
+    }
+    data = player.data;
+    audio = pickBestAudio(data.streamingData);
+    if (audio?.url) {
+      setCachedStream(videoId, data, audio);
+    }
+  }
 
   if (!audio?.url) {
     return c.json({ error: 'Audio tidak tersedia untuk diunduh.' }, 404);
