@@ -1,0 +1,48 @@
+name: Deploy Node.js ke Server Ubuntu
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ambil kode terbaru dari GitHub
+        uses: actions/checkout@v4
+
+      - name: Buat file .env dari Secret
+        run: |
+          cat << 'EOF' > .env
+          ${{ secrets.ENV_FILE }}
+          EOF
+
+      - name: Upload file aplikasi ke Server via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME || 'ubuntu' }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          source: "src,public,package.json,package-lock.json,.env"
+          target: "~/yt-downloader"
+
+      - name: Eksekusi command Node.js di Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME || 'ubuntu' }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            cd ~/yt-downloader
+            npm ci --omit=dev || npm install --omit=dev
+
+            # Menjalankan atau merestart aplikasi dengan nama 'yt-downloader'
+            pm2 restart yt-downloader || pm2 start src/server.js --name "yt-downloader"
+
+            # Simpan state PM2 agar otomatis berjalan jika server reboot
+            pm2 save

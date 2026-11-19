@@ -28,7 +28,7 @@ function setCachedStream(videoId, data, audio) {
 
 // Middleware Proteksi PIN Akses
 api.use('*', async (c, next) => {
-  const configuredPin = c.env.ACCESS_PIN;
+  const configuredPin = process.env.ACCESS_PIN;
   if (!configuredPin) {
     return next(); // Tanpa proteksi jika ACCESS_PIN tidak diatur di environment
   }

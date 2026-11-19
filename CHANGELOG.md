@@ -12,16 +12,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Mengatasi kegagalan unduhan (HTTP 502) akibat blokir bot YouTube dengan menambahkan in-memory stream cache antara rute info dan download.
 
 ### Added
+- Dukungan runtime Node.js (`src/server.js` via `@hono/node-server` & `dotenv`) untuk deployment ke VPS Ubuntu dengan PM2.
+- Middleware CORS (`hono/cors`) pada `/api/*` agar API siap diakses oleh aplikasi eksternal lintas origin.
+- Workflow CI/CD GitHub Actions (`.github/workflows/deploy.yml`) untuk auto-deploy ke VPS via SCP dan PM2.
 - Penyimpanan otomatis link YouTube terakhir yang digunakan pada `localStorage` (`yt_last_url`).
 - Fitur proteksi PIN rahasia (`ACCESS_PIN`) via middleware backend untuk membatasi akses publik.
 - Dialog modal PIN di frontend dengan penyimpanan sesi otomatis di `localStorage`.
-- Template konfigurasi secret `.env.example` untuk panduan deployment Cloudflare.
+- Template konfigurasi secret `.env.example` untuk panduan deployment VPS.
 
 ### Removed
+- Konfigurasi dan dependensi Cloudflare Workers (`wrangler.jsonc` dan `wrangler`).
 - Dependensi Cloudflare D1 (tabel `downloads` dan `rate_limits`).
 - Modul middleware rate limiter berbasis database (`src/lib/rate-limit.js`).
 
 ### Changed
+- Pembacaan `ACCESS_PIN` menggunakan `process.env` pada runtime Node.js.
 - Penyelarasan nama Worker pada `wrangler.jsonc` menjadi `yt-downloader` agar sesuai dengan CI dashboard Cloudflare.
 - Refaktor arsitektur menjadi murni *stateless* tanpa database untuk kemudahan deployment.
 - Penyelarasan nama proyek dan branding menjadi **YT Downloader** (`yt-downloader-web`) serta modul internal `src/lib/stream-picker.js`.
