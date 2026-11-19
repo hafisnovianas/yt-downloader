@@ -8,8 +8,8 @@
 </head>
 <body>
   <main>
-    <h1>YT Audio Downloader</h1>
-    <p class="subtitle">Paste link YouTube, download audionya.</p>
+    <h1>YT Audio & Video Downloader</h1>
+    <p class="subtitle">Unduh audio murni atau video 360p dari link YouTube.</p>
 
     <form id="form" autocomplete="off">
       <div class="input-row">
@@ -36,7 +36,16 @@
           <p id="details" class="secondary"></p>
         </div>
       </div>
-      <a id="download-btn" class="btn-download">Download Audio</a>
+
+      <div class="btn-actions">
+        <button id="audio-btn" class="btn-action btn-primary" type="button">
+          Unduh Audio Murni (AAC)
+        </button>
+        <a id="video-btn" class="btn-action btn-secondary">
+          Unduh Video (360p MP4)
+        </a>
+      </div>
+      <p id="extract-status" class="extract-status" hidden></p>
     </section>
   </main>
 

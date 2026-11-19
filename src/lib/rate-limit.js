@@ -16,7 +16,14 @@ export async function rateLimitMiddleware(c, next) {
   const db = c.env.DB;
   if (!db) return next(); // Skip jika D1 belum di-binding (dev tanpa DB)
 
-  const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || 'unknown';
+  const host = c.req.header('host') || '';
+  const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for');
+
+  // Bypass saat pengujian lokal (localhost / 127.0.0.1)
+  if (!ip || ip === '127.0.0.1' || ip === '::1' || host.includes('localhost') || host.includes('127.0.0.1')) {
+    return next();
+  }
+
   const ipHash = await hashIP(ip);
   const now = Math.floor(Date.now() / 1000);
 

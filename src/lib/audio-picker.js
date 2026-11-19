@@ -34,7 +34,7 @@ export function pickBestAudio(streamingData) {
     return {
       url: picked.url,
       itag: picked.itag,
-      mimeType: 'audio/mp4',
+      mimeType: picked.mimeType || 'video/mp4',
       bitrate: picked.audioBitrate || 128000,
       contentLength: picked.contentLength ? Number(picked.contentLength) : null,
     };
@@ -60,6 +60,7 @@ export function pickBestAudio(streamingData) {
  */
 export function audioExtension(mimeType) {
   if (!mimeType) return 'mp4';
+  if (mimeType.startsWith('video/')) return 'mp4';
   if (mimeType.includes('mp4') || mimeType.includes('m4a')) return 'm4a';
   if (mimeType.includes('webm')) return 'webm';
   if (mimeType.includes('ogg')) return 'ogg';

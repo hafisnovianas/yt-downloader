@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Fitur 2 opsi unduhan di antarmuka web: **Unduh Audio Murni (AAC)** dan **Unduh Video (360p MP4)**.
+- Modul demuxer biner client-side (`extractAacFromMp4`) di `public/app.js` untuk memotong trek video H.264 dan menghasilkan berkas audio murni tanpa render ulang.
+- Indikator progres unduhan persentase real-time (`0% – 100%`) saat data streaming diterima dari server.
+- Pengecualian (*bypass*) otomatis pada middleware rate limiter untuk koneksi lokal (`localhost` dan `127.0.0.1`).
+
+### Changed
+- Standarisasi ekstensi dan MIME type berkas unduhan video langsung menjadi `video/mp4` (`.mp4`).
+
+### Initial Release
 - Inisialisasi proyek YT Audio Downloader versi web menggunakan Cloudflare Workers + Hono.
 - Core library `src/lib/innertube.js`: integrasi YouTube Innertube Player API dengan fallback multi-client (ANDROID, IOS, WEB_EMBEDDED), diport dari versi bot Telegram.
 - Pemilih stream audio `src/lib/audio-picker.js`: prioritas adaptive audio → progressive → cipher detection.

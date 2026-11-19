@@ -121,7 +121,7 @@ api.get('/download', async (c) => {
 
   // Streaming proxy — pipe langsung ke browser
   const headers = {
-    'Content-Type': audio.mimeType?.split(';')[0] || 'audio/mp4',
+    'Content-Type': audio.mimeType?.split(';')[0] || 'video/mp4',
     'Content-Disposition': `attachment; filename="${filename}"`,
     'Cache-Control': 'no-store',
   };
