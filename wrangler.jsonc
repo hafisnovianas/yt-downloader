@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ytaudiodownloader-web",
+  "main": "src/index.js",
+  "compatibility_date": "2024-12-01",
+  "assets": {
+    "directory": "./public"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      // Ganti dengan ID asli setelah menjalankan: wrangler d1 create ytaudio-db
+      "database_name": "ytaudio-db",
+      "database_id": "LOCAL_PLACEHOLDER"
+    }
+  ]
+}

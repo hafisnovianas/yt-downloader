@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YT Audio Downloader</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main>
+    <h1>YT Audio Downloader</h1>
+    <p class="subtitle">Paste link YouTube, download audionya.</p>
+
+    <form id="form" autocomplete="off">
+      <div class="input-row">
+        <input
+          type="text"
+          id="url-input"
+          placeholder="https://youtu.be/..."
+          spellcheck="false"
+          autofocus
+          required
+        >
+        <button type="submit" id="fetch-btn">Ambil Info</button>
+      </div>
+    </form>
+
+    <p id="error" class="error" hidden></p>
+
+    <section id="result" hidden>
+      <div class="video-info">
+        <img id="thumbnail" alt="" loading="lazy">
+        <div class="meta">
+          <h2 id="title"></h2>
+          <p id="author" class="secondary"></p>
+          <p id="details" class="secondary"></p>
+        </div>
+      </div>
+      <a id="download-btn" class="btn-download">Download Audio</a>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
